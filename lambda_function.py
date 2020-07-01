@@ -57,15 +57,13 @@ def lambda_handler(event, context):
             
         return output
     
-    ##todo
-    elif (user_input == "!yes"):
-        #last_tweet = {"tweet": "blala", "fake_tweet":"true"}
-        #user_input = "!yes"
-
-        if (last_tweet["fake_tweet"] == "yes"):
+    #react to user responding if a tweet is from trump or generated
+    elif (user_input == "!yes" and fake_tweet != "exit"):
+        
+        if (fake_tweet == "true"):
 
             output["body"] = json.dumps({
-                "flavor_text": "Haha, you think that is fake news?",
+                "flavor_text": "This story is just another made up by Fake News tale that is told only to damage me. 100% Correct. Thank you.", #user correct - tweet generated
                 "last_tweet": "",
                 "fake_tweet": "exit" 
             })
@@ -73,8 +71,8 @@ def lambda_handler(event, context):
             item = {
                 "tweet_id": str(int(round(time.time() * 1000))),
                 "user_input": str(user_input),
-                "last_tweet": last_tweet["tweet"],
-                "fake_tweet": last_tweet["fake_tweet"],
+                "last_tweet": last_tweet,
+                "fake_tweet": fake_tweet,
                 "result": "false"
             }
 
@@ -85,7 +83,7 @@ def lambda_handler(event, context):
         else:
 
             output["body"] = json.dumps({
-                    "flavor_text": "Correct, that is the truth!",
+                    "flavor_text": "I am full of honesty and sincerity on the other hand you are a total liar. You got it wrong!", #user incorrect - tweet real
                     "last_tweet": "",
                     "fake_tweet": "exit"  
                 })
@@ -93,8 +91,8 @@ def lambda_handler(event, context):
             item = {
                 "tweet_id": str(int(round(time.time() * 1000))),
                 "user_input": str(user_input),
-                "last_tweet": last_tweet["tweet"],
-                "fake_tweet": last_tweet["fake_tweet"],
+                "last_tweet": last_tweet,
+                "fake_tweet": fake_tweet,
                 "result": "true"
             }
 
@@ -102,20 +100,21 @@ def lambda_handler(event, context):
 
             return output
      
-    elif (user_input == "!no"):
-        if (last_tweet["fake_tweet"] == "yes"):
+    elif (user_input == "!no" and fake_tweet != "exit"):
+        
+        if (fake_tweet == "true"):
 
             output["body"] = json.dumps({
-                "flavor_text": "Correct, that is the truth!",
+                "flavor_text": "Haha, that was a fake tweet! Get this liar out of the White House.", #user incorrect - tweet generated
                 "last_tweet": "",
-                "fake_tweet": "no" 
+                "fake_tweet": "exit" 
             })
 
             item = {
                 "tweet_id": str(int(round(time.time() * 1000))),
                 "user_input": str(user_input),
-                "last_tweet": last_tweet["tweet"],
-                "fake_tweet": last_tweet["fake_tweet"],
+                "last_tweet": last_tweet,
+                "fake_tweet": fake_tweet,
                 "result": "true"
             }
 
@@ -126,7 +125,7 @@ def lambda_handler(event, context):
         else:
 
             output["body"] = json.dumps({
-                    "flavor_text": "Haha, you think that is fake news?",
+                    "flavor_text": "I dictated this tweet to my executive assistant and she posted it. True!", #user correct - tweet real
                     "last_tweet": "",
                     "fake_tweet": "exit"  
                 })
@@ -134,8 +133,8 @@ def lambda_handler(event, context):
             item = {
                 "tweet_id": str(int(round(time.time() * 1000))),
                 "user_input": str(user_input),
-                "last_tweet": last_tweet["tweet"],
-                "fake_tweet": last_tweet["fake_tweet"],
+                "last_tweet": last_tweet,
+                "fake_tweet": fake_tweet,
                 "result": "false"
             }
 
@@ -166,7 +165,7 @@ def lambda_handler(event, context):
         else:
             matched_group_topics = matching_group(topics_retrieved)
 
-            tweet_function_list = [generate_fake_tweet(matched_group_topics, topics_retrieved), return_real_tweet(matched_group_topics)]
+            tweet_function_list = [generate_fake_tweet(matched_group_topics, topics_retrieved), return_real_tweet(matched_group_topics, topics_retrieved)]
 
             tweet = random.choice(tweet_function_list)
 
@@ -345,10 +344,10 @@ def generate_fake_tweet(matched_group, topics):
 
     return {"tweet": "Hard topic, i can't make up something.", "fake_tweet": "true"}
 
-def return_real_tweet(topics):
+def return_real_tweet(matched_group, topics):
     tweets = []
 
-    with open(topics["file"], encoding="utf8") as txt_file:   
+    with open(matched_group["file"], encoding="utf8") as txt_file:   
         for line in txt_file:
             clean_line = re.sub("\n", "", line)
             tweets.append(clean_line)
