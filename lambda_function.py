@@ -5,12 +5,8 @@ import re
 import time
 import random
 import markovify
-import spacy
-
-#update if needed or directly link to cluster top 10 words - needs to be corrected
-#topics = ["barack obama", "democrats", "china", "deal", "media", "election", "campaign", "interview", "fox news", "fake news", "news", "fakenews", "cnn", "nbc", "obamagate",
-#          "provocation", "maga", "make america great again", "kag2020", "keep america great", "hashtag", "thank you", "congrats", "barack obama", "hillary",
-#          "america", "jobs", "state of the union", "announcement", "congress", "senator"]
+#import spacy
+nlp = spacy.load('en_core_web_sm')
 
 topics = ["obama", "democrats", "china", "deal", "the mainstream media", "election", "campaign", "interview", "fox", "fake", "news", "fake news", "make america great", "keep america great", "@ cnn",
            "#", "thank you", "congratulations", "hillary", "america", "jobs", "congress", "senator"]
@@ -50,15 +46,15 @@ def lambda_handler(event, context):
     if (user_input == "!help"):
         
         output["body"] = json.dumps({
-                "flavor_text": "I make a very gold conversation on these numerous topics: ",
-                "last_tweet": return_topics(),
+                "flavor_text": "I make a very gold conversation on these numerous topics: " + return_topics(),
+                "last_tweet": "",
                 "fake_tweet": "exit" 
             })
             
         return output
     
     #react to user responding if a tweet is from trump or generated
-    elif (user_input == "!yes" and fake_tweet != "exit"):
+    elif (user_input == "!fake" and fake_tweet != "exit"):
         
         if (fake_tweet == "true"):
 
@@ -73,7 +69,7 @@ def lambda_handler(event, context):
                 "user_input": str(user_input),
                 "last_tweet": last_tweet,
                 "fake_tweet": fake_tweet,
-                "result": "false"
+                "result": "user correct -- tweet generated"
             }
 
             table2.put_item(Item = item)
@@ -93,14 +89,14 @@ def lambda_handler(event, context):
                 "user_input": str(user_input),
                 "last_tweet": last_tweet,
                 "fake_tweet": fake_tweet,
-                "result": "true"
+                "result": "user incorrect -- tweet real"
             }
 
             table2.put_item(Item = item)
 
             return output
      
-    elif (user_input == "!no" and fake_tweet != "exit"):
+    elif (user_input == "!real" and fake_tweet != "exit"):
         
         if (fake_tweet == "true"):
 
@@ -115,7 +111,7 @@ def lambda_handler(event, context):
                 "user_input": str(user_input),
                 "last_tweet": last_tweet,
                 "fake_tweet": fake_tweet,
-                "result": "true"
+                "result": "user incorrect - tweet generated"
             }
 
             table2.put_item(Item = item)
@@ -135,7 +131,7 @@ def lambda_handler(event, context):
                 "user_input": str(user_input),
                 "last_tweet": last_tweet,
                 "fake_tweet": fake_tweet,
-                "result": "false"
+                "result": "user correct - tweet real"
             }
 
             table2.put_item(Item = item)
@@ -178,7 +174,7 @@ def lambda_handler(event, context):
             table.put_item(Item = item)
  
             output["body"] = json.dumps({
-                    "flavor_text": "While Democrats continue to leak false narratives, here’s what the actual witness interviews would show you:",
+                    "flavor_text": "Here is your tweet -- test it:",
                     "last_tweet": tweet["tweet"],
                     "fake_tweet": tweet["fake_tweet"]
             })
@@ -324,38 +320,56 @@ def generate_fake_tweet(matched_group, topics):
             tweets.append(clean_line)
 
     model = markovify.Text(tweets, state_size = 3, well_formed = False)
+    
+    output = []
+    retries = 0
 
-    for topic in matched_group["subtopics"]:
-        if(topic == "media"):
-            topic = "the mainstream media"
-        if(topic == "maga"):
-            topic = "make america great"
-        if(topic == "make america great again"):
-            topic = "make america great"
-        if(topic == "kag2020"):
-            topic = "keep america great"
-
-        output = model.make_sentence_with_start(topic)
-
-        nlp = en_core_web_sm.load()
-
-        if (output != None):
-            return {"tweet": output, "fake_tweet": "true"}
-
-    return {"tweet": "Hard topic, i can't make up something.", "fake_tweet": "true"}
+    while (retries < 2 and len(output) < 1):
+        retries += 1
+        
+        for topic in topics:
+            
+            if(topic == "media"):
+                topic = "the mainstream media"
+            if(topic == "maga"):
+                topic = "make america great"
+            if(topic == "make america great again"):
+                topic = "make america great"
+            if(topic == "kag2020"):
+                topic = "keep america great"
+            
+            try:
+                sentence = model.make_sentence_with_start(topic)
+                
+                if (sentence != None):
+                    output.append(sentence)
+                
+            except:
+                output.append("error")
+    
+    try:
+        return {"tweet": random.choice(nlp(output)), "fake_tweet": "true"}
+        
+    except:
+        output.append("error")
+        return {"tweet": output[0], "fake_tweet": "true"}
 
 def return_real_tweet(matched_group, topics):
     tweets = []
-
+    
     with open(matched_group["file"], encoding="utf8") as txt_file:   
         for line in txt_file:
             clean_line = re.sub("\n", "", line)
             tweets.append(clean_line)
 
-    possible_tweets = []
-    for tweet in tweets:
-        for topic in topics:
-            if topic in tweet:
-                possible_tweets.append(tweet)
-    
-    return {"tweet": random.choice(possible_tweets), "fake_tweet": "false"}
+    try:
+        possible_tweets = []
+        for tweet in tweets:
+            for topic in topics:
+                if topic in tweet:
+                    if (re.search(rf'^{topic}', tweet)):
+                        possible_tweets.append(tweet)
+        
+        return {"tweet": random.choice(possible_tweets), "fake_tweet": "false"}
+    except:
+        return {"tweet": random.choice(tweets), "fake_tweet": "false"}
