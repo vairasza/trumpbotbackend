@@ -6,16 +6,15 @@ import time
 import random
 import markovify
 #import spacy
-nlp = spacy.load('en_core_web_sm')
 
 topics = ["obama", "democrats", "china", "deal", "the mainstream media", "election", "campaign", "interview", "fox", "fake", "news", "fake news", "make america great", "keep america great", "@ cnn",
            "#", "thank you", "congratulations", "hillary", "america", "jobs", "congress", "senator"]
 
 #these groups are a reprensentation for our clusters
-group_1 = {"overtopic": "election", "count": 0, "subtopics": topics[:6], "file": "gruppe1.txt"}
-group_2 = {"overtopic": "news", "count": 0, "subtopics": topics[6:13], "file": "gruppe2.txt"}
-group_3 = {"overtopic": "people", "count": 0, "subtopics": topics[13:17], "file": "gruppe3.txt"}
-group_4 = {"overtopic": "politics", "count": 0, "subtopics": topics[17:], "file": "gruppe4.txt"}
+group_1 = {"overtopic": "election", "count": 0, "subtopics": topics[:7], "file": "gruppe1.txt"}
+group_2 = {"overtopic": "news", "count": 0, "subtopics": topics[7:14], "file": "gruppe2.txt"}
+group_3 = {"overtopic": "people", "count": 0, "subtopics": topics[14:18], "file": "gruppe3.txt"}
+group_4 = {"overtopic": "politics", "count": 0, "subtopics": topics[18:], "file": "gruppe4.txt"}
 
 ###
 ### event handler
@@ -174,7 +173,7 @@ def lambda_handler(event, context):
             table.put_item(Item = item)
  
             output["body"] = json.dumps({
-                    "flavor_text": "Here is your tweet -- test it:",
+                    "flavor_text": "Some very interesting topics -- here is my tweet:",
                     "last_tweet": tweet["tweet"],
                     "fake_tweet": tweet["fake_tweet"]
             })
@@ -197,7 +196,7 @@ def retrieve_topics(user_input):
         if (re.search(r'(obama|barack.?obama|barack)', user_input)):
             array_of_topics.append("barack obama")
             
-        if (re.search(r'(democrat.*|senators?|part(y|ies)|speaker|congres.*)', user_input)):
+        if (re.search(r'(democrat.*|part(y|ies))', user_input)):
             array_of_topics.append("democrats")
             
         if (re.search(r'(china|peking|xi( jinping)?)', user_input)):
@@ -215,14 +214,14 @@ def retrieve_topics(user_input):
         if (re.search(r'campaign.*', user_input)):
             array_of_topics.append("campaign")
             
-        if (re.search(r'(interview.|meet.*|press( conference)?|statements?)', user_input)):
+        if (re.search(r'(interview.?|meet.*|press( conference)?|statements?)', user_input)):
             array_of_topics.append("interview")
         
         if (re.search(r'fox( news)?', user_input)):
-            array_of_topics.append("fox news")
+            array_of_topics.append("fox")
             
         if (re.search(r'(fake( news)?|hoax|scam.*|trick.*|fraud)', user_input)):
-            array_of_topics.append("fake news")
+            array_of_topics.append("fake")
             
         if (re.search(r'(news|report.*|state(ment)?|rumor.*|report.*)', user_input)):
             array_of_topics.append("news")
@@ -244,9 +243,6 @@ def retrieve_topics(user_input):
             
         if (re.search(r'(kag(2020)?|keep america great)', user_input)):
             array_of_topics.append("keep america great")
-            
-        if (re.search(r'#', user_input)):
-            array_of_topics.append("hashtag")
             
         if (re.search(r'(thanks?(you)?|prais.*|grateful|appreciat.*)', user_input)):
             array_of_topics.append("thank you")
@@ -348,7 +344,7 @@ def generate_fake_tweet(matched_group, topics):
                 output.append("error")
     
     try:
-        return {"tweet": random.choice(nlp(output)), "fake_tweet": "true"}
+        return {"tweet": random.choice(output), "fake_tweet": "true"}
         
     except:
         output.append("error")
@@ -366,6 +362,16 @@ def return_real_tweet(matched_group, topics):
         possible_tweets = []
         for tweet in tweets:
             for topic in topics:
+                
+                if(topic == "media"):
+                    topic = "the mainstream media"
+                if(topic == "maga"):
+                    topic = "make america great"
+                if(topic == "make america great again"):
+                    topic = "make america great"
+                if(topic == "kag2020"):
+                    topic = "keep america great"
+                
                 if topic in tweet:
                     if (re.search(rf'^{topic}', tweet)):
                         possible_tweets.append(tweet)
