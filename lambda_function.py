@@ -7,14 +7,18 @@ import random
 import markovify
 #import spacy
 
-topics = ["obama", "democrats", "china", "deal", "the mainstream media", "election", "campaign", "interview", "fox", "fake", "news", "fake news", "make america great", "keep america great", "@ cnn",
-           "#", "thank you", "congratulations", "hillary", "america", "jobs", "congress", "senator"]
-
 #these groups are a reprensentation for our clusters
-group_1 = {"overtopic": "election", "count": 0, "subtopics": topics[:7], "file": "gruppe1.txt"}
-group_2 = {"overtopic": "news", "count": 0, "subtopics": topics[7:14], "file": "gruppe2.txt"}
-group_3 = {"overtopic": "people", "count": 0, "subtopics": topics[14:18], "file": "gruppe3.txt"}
-group_4 = {"overtopic": "politics", "count": 0, "subtopics": topics[18:], "file": "gruppe4.txt"}
+models = [{"topic": "america", "count": 0, "file": "markov_america.txt"}, {"topic": "china", "count": 0, "file": "markov_china.txt"},
+{"topic": "clinton", "count": 0, "file": "markov_clinton.txt"}, {"topic": "cnn", "count": 0, "file": "markov_cnn.txt"}, {"topic": "covid", "count": 0, "file": "markov_covid.txt"},
+{"topic": "dems", "count": 0, "file": "markov_dems.txt"}, {"topic": "elections", "count": 0, "file": "markov_elections.txt"}, {"topic": "fakes", "count": 0, "file": "markov_fakes.txt"},
+{"topic": "family", "count": 0, "file": "markov_family.txt"}, {"topic": "fox", "count": 0, "file": "markov_fox.txt"}, {"topic": "germany", "count": 0, "file": "markov_germany.txt"},
+{"topic": "guns", "count": 0, "file": "markov_guns.txt"}, {"topic": "healths", "count": 0, "file": "markov_healths.txt"}, {"topic": "industry", "count": 0, "file": "markov_industry.txt"},
+{"topic": "interview", "count": 0, "file": "markov_interview.txt"}, {"topic": "iran", "count": 0, "file": "markov_iran.txt"}, {"topic": "jobs", "count": 0, "file": "markov_jobs.txt"},
+{"topic": "kag", "count": 0, "file": "markov_kag.txt"},
+{"topic": "korea", "count": 0, "file": "markov_korea.txt"}, {"topic": "maga", "count": 0, "file": "markov_maga.txt"}, {"topic": "media", "count": 0, "file": "markov_media.txt"},
+{"topic": "military", "count": 0, "file": "markov_military.txt"}, {"topic": "myself", "count": 0, "file": "markov_myself.txt"}, {"topic": "nbc", "count": 0, "file": "markov_nbc.txt"},
+{"topic": "obamas", "count": 0, "file": "markov_obamas.txt"}, {"topic": "politics", "count": 0, "file": "markov_politics.txt"}, {"topic": "republican", "count": 0, "file": "markov_republican.txt"},
+{"topic": "russia", "count": 0, "file": "markov_russia.txt"}, {"topic": "walls", "count": 0, "file": "markov_walls.txt"}]
 
 ###
 ### event handler
@@ -38,8 +42,8 @@ def lambda_handler(event, context):
 
     #def client for dynamodb
     client = boto3.resource("dynamodb")
-    table = client.Table("trump_data")
-    table2 = client.Table("trump_fake_tweet_record")
+    table = client.Table("trump_data_alt")
+    table2 = client.Table("trump_fake_tweet_record_alt")
     
     #if user types !help, return all available topics to the bot
     if (user_input == "!help"):
@@ -144,7 +148,8 @@ def lambda_handler(event, context):
             item = {
                 "tweet_id": str(int(round(time.time() * 1000))),
                 "user_input": str(user_input),
-                "output": "",
+                "tweet": "",
+                "fake_tweet": ""
             }
 
             table.put_item(Item = item)
@@ -159,15 +164,16 @@ def lambda_handler(event, context):
             
         else:
             matched_group_topics = matching_group(topics_retrieved)
-
-            tweet_function_list = [generate_fake_tweet(matched_group_topics, topics_retrieved), return_real_tweet(matched_group_topics, topics_retrieved)]
-
-            tweet = random.choice(tweet_function_list)
+            
+            rnd = random.randint(0,1)
+            
+            tweet = generate_fake_tweet(matched_group_topics, topics_retrieved) if (rnd > 0.5) else return_real_tweet(matched_group_topics, topics_retrieved)
 
             item = {
                 "tweet_id": str(int(round(time.time() * 1000))),
                 "user_input": str(user_input),
-                "output": tweet,
+                "tweet": tweet["tweet"],
+                "fake_tweet": tweet["fake_tweet"]
             }
 
             table.put_item(Item = item)
@@ -182,7 +188,15 @@ def lambda_handler(event, context):
 
 
 def return_topics():
-    return ", ".join(topics)
+    output = ""
+    for x in models:
+        if x == models[-1]:
+            output += x["topic"]
+            
+        else:
+            output += x["topic"] + ", "
+        
+    return output
 
 
 def retrieve_topics(user_input):
@@ -193,84 +207,94 @@ def retrieve_topics(user_input):
         user_input = re.sub(r'[^A-Za-z0-9 ]', '', user_input)
         user_input = user_input.lower()
         
-        if (re.search(r'(obama|barack.?obama|barack)', user_input)):
-            array_of_topics.append("barack obama")
-            
-        if (re.search(r'(democrat.*|part(y|ies))', user_input)):
-            array_of_topics.append("democrats")
-            
-        if (re.search(r'(china|peking|xi( jinping)?)', user_input)):
-            array_of_topics.append("china")
-            
-        if (re.search(r'(deals?|trade deal|contract)', user_input)):
-            array_of_topics.append("deal")
-            
-        if (re.search(r'(medias?|television|tv|radio|news)', user_input)):
-            array_of_topics.append("media")
-            
-        if (re.search(r'elections?|ballot.*|polls?', user_input)):
-            array_of_topics.append("election")
+        for word in user_input.split():
         
-        if (re.search(r'campaign.*', user_input)):
-            array_of_topics.append("campaign")
+            if (re.search(r'(obama|barack)', word)):
+                array_of_topics.append("obamas")
+                
+            if (re.search(r'(democrat.*|part.*)', word)):
+                array_of_topics.append("dems")
+                
+            if (re.search(r'(china|peking|xi|jinping)', word)):
+                array_of_topics.append("china")
+    
+            if (re.search(r'(media.*|television|tv|radio|news)', word)):
+                array_of_topics.append("media")
+                
+            if (re.search(r'elect.*|ballot.*|poll.*', word)):
+                array_of_topics.append("elections")
+                
+            if (re.search(r'(interview.*|meet.*|press|statement.*)', word)):
+                array_of_topics.append("interview")
             
-        if (re.search(r'(interview.?|meet.*|press( conference)?|statements?)', user_input)):
-            array_of_topics.append("interview")
-        
-        if (re.search(r'fox( news)?', user_input)):
-            array_of_topics.append("fox")
+            if (re.search(r'fox', word)):
+                array_of_topics.append("fox")
+                
+            if (re.search(r'(fake.*|hoax|scam.*|trick.*|fraud)', word)):
+                array_of_topics.append("fakes")
+                
+            if (re.search(r'cnn', word)):
+                array_of_topics.append("cnn")
+                
+            if (re.search(r'nbc', word)):
+                array_of_topics.append("nbc")
+                
+            if (re.search(r'(maga|make america great again)', word)):
+                array_of_topics.append("maga")
+                
+            if (re.search(r'(kag.?|keep america great)', word)):
+                array_of_topics.append("kag")
+                
+            if (re.search(r'(hillary|crook.*|clinton)', word)):
+                array_of_topics.append("clinton")
+                
+            if (re.search(r'(usa|america.*|land|states)', word)):
+                array_of_topics.append("america")
             
-        if (re.search(r'(fake( news)?|hoax|scam.*|trick.*|fraud)', user_input)):
-            array_of_topics.append("fake")
+            if (re.search(r'(work|job.*|business|career|office|profession|task.*)', word)):
+                array_of_topics.append("jobs")
+                
+            if (re.search(r'(corona|covid19|covid|.*virus|disease.*|epidemic.*|contag.*)', word)):
+                array_of_topics.append("covid")
             
-        if (re.search(r'(news|report.*|state(ment)?|rumor.*|report.*)', user_input)):
-            array_of_topics.append("news")
-            
-        if (re.search(r'cnn', user_input)):
-            array_of_topics.append("cnn")
-            
-        if (re.search(r'nbc', user_input)):
-            array_of_topics.append("nbc")
-            
-        if (re.search(r'obamagate', user_input)):
-            array_of_topics.append("obamagate")
-            
-        if (re.search(r'(provocat.*|affront|insult.*)', user_input)):
-            array_of_topics.append("provocation")
-            
-        if (re.search(r'(maga|make america great again)', user_input)):
-            array_of_topics.append("make america great again")
-            
-        if (re.search(r'(kag(2020)?|keep america great)', user_input)):
-            array_of_topics.append("keep america great")
-            
-        if (re.search(r'(thanks?(you)?|prais.*|grateful|appreciat.*)', user_input)):
-            array_of_topics.append("thank you")
-            
-        if (re.search(r'(congrat.*|compliments?|bless.*)', user_input)):
-            array_of_topics.append("congrats")
-            
-        if (re.search(r'(hillary|crook.*|clinton)', user_input)):
-            array_of_topics.append("hillary")
-            
-        if (re.search(r'(usa|america.*|land|states)', user_input)):
-            array_of_topics.append("america")
-        
-        if (re.search(r'(work|job.*|business|career|office|profession|task.*)', user_input)):
-            array_of_topics.append("jobs")
-            
-        if (re.search(r'state of the union', user_input)):
-            array_of_topics.append("state of the union")
-            
-        if (re.search(r'(announc.*|advertis.*|messag.*|publica.*)', user_input)):
-            array_of_topics.append("announcement")
-            
-        if (re.search(r'congress.*', user_input)):
-            array_of_topics.append("congress")
-            
-        if (re.search(r'senat.*', user_input)):
-            array_of_topics.append("senator")
-            
+            if (re.search(r'(clan|group|child.*|wife|melania|trump)', word)):
+                array_of_topics.append("family")
+                
+            if (re.search(r'(merkel|german.*|deutsch.*|nazi.*)', word)):
+                array_of_topics.append("germany")
+                
+            if (re.search(r'(cannon.*|handgun.*|pistol.*|revolver.*|rifl.*|shotgun.*|firegun.*|weapon.*)', word)):
+                array_of_topics.append("guns")            
+                
+            if (re.search(r'(fitness|strength|health.*|doctor.*|medic.*|hospital.*|obamacare)', word)):
+                array_of_topics.append("healths")
+                
+            if (re.search(r'(busines.*|commerc.*|corporat.*|manage.*|product.*|trad.*|monopol.*)', word)):
+                array_of_topics.append("industry")            
+                
+            if (re.search(r'(iran.*|rohani|hassan|conflict.*|war|terror.*|islam.*|misogyn.*|nuclear.*|persic.*)', word)):
+                array_of_topics.append("iran")
+                
+            if (re.search(r'(korea.*|moon|jae.*|north korea|kim|jong.*|conflict|war|seoul|pyongyang|dictat.*|demilitarized)', word)):
+                array_of_topics.append("korea")
+                
+            if (re.search(r'(milita.*|soldier.*|war|conflict|nuclear.*|attack)', word)):
+                array_of_topics.append("military")            
+    
+            if (re.search(r'(donald|trump|president)', word)):
+                array_of_topics.append("myself")
+                
+            if (re.search(r'(politic.*|senat.*|congres.*|law|decree|rule.*|president)', word)):
+                array_of_topics.append("politics")            
+                
+            if (re.search(r'(republic.*|politic.*)', word)):
+                array_of_topics.append("republican")            
+                
+            if (re.search(r'(putin|russi.*|wodka|cold)', word)):
+                array_of_topics.append("russia")            
+                
+            if (re.search(r'(wall.*|pledg.*|campaign|mexic.*|border)', word)):
+                array_of_topics.append("walls")
             
         #return none if no match was found    
         if(len(array_of_topics) == 0):
@@ -281,101 +305,41 @@ def retrieve_topics(user_input):
     else:
         return None
 
-    
+
 def matching_group(topics):
-    group_1["count"] = 0
-    group_2["count"] = 0
-    group_3["count"] = 0
-    group_4["count"] = 0
     
     for word in topics:
         
-        if (word in group_1["subtopics"]):
-            group_1["count"] += 1
+        for model in models:
         
-        if (word in group_2["subtopics"]):
-            group_2["count"] += 1
-            
-        if (word in group_3["subtopics"]):
-            group_3["count"] += 1
-            
-        if (word in group_4["subtopics"]):
-            group_4["count"] += 1
+            if (word == model["topic"]):
+                model["count"] += 1
 
-    group = max([group_1, group_2, group_3, group_4], key=itemgetter('count'))
+    group = max(models, key=itemgetter('count'))
             
     return group
-  
-    
+
+
 def generate_fake_tweet(matched_group, topics):
-    tweets = []
-
-    with open(matched_group["file"], encoding="utf8") as txt_file:   
-        for line in txt_file:
-            clean_line = re.sub("\n", "", line)
-            tweets.append(clean_line)
-
-    model = markovify.Text(tweets, state_size = 3, well_formed = False)
+    key = "models/" + matched_group["file"]
     
-    output = []
-    retries = 0
-
-    while (retries < 2 and len(output) < 1):
-        retries += 1
-        
-        for topic in topics:
-            
-            if(topic == "media"):
-                topic = "the mainstream media"
-            if(topic == "maga"):
-                topic = "make america great"
-            if(topic == "make america great again"):
-                topic = "make america great"
-            if(topic == "kag2020"):
-                topic = "keep america great"
-            
-            try:
-                sentence = model.make_sentence_with_start(topic)
-                
-                if (sentence != None):
-                    output.append(sentence)
-                
-            except:
-                output.append("error")
+    s3 = boto3.client('s3')
+    s3_obj = s3.get_object(Bucket = 'trump-data', Key = key)
     
-    try:
-        return {"tweet": random.choice(output), "fake_tweet": "true"}
-        
-    except:
-        output.append("error")
-        return {"tweet": output[0], "fake_tweet": "true"}
+    model = json.loads(s3_obj["Body"].read())
+    model = markovify.Text.from_json(model)
+
+    return {"tweet": model.make_short_sentence(140), "fake_tweet": "true"}
+
 
 def return_real_tweet(matched_group, topics):
-    tweets = []
+    key = "real_tweets/" + matched_group["file"]
     
-    with open(matched_group["file"], encoding="utf8") as txt_file:   
-        for line in txt_file:
-            clean_line = re.sub("\n", "", line)
-            tweets.append(clean_line)
+    s3 = boto3.client('s3')
+    s3_obj = s3.get_object(Bucket = 'trump-data', Key = key)
+    
+    tweets = json.loads(s3_obj["Body"].read())
+    
+    tweet = random.choice(tweets)
 
-    try:
-        possible_tweets = []
-        for tweet in tweets:
-            for topic in topics:
-                
-                if(topic == "media"):
-                    topic = "the mainstream media"
-                if(topic == "maga"):
-                    topic = "make america great"
-                if(topic == "make america great again"):
-                    topic = "make america great"
-                if(topic == "kag2020"):
-                    topic = "keep america great"
-                
-                if topic in tweet:
-                    if (re.search(rf'^{topic}', tweet)):
-                        possible_tweets.append(tweet)
-        
-        return {"tweet": random.choice(possible_tweets), "fake_tweet": "false"}
-    except:
-        return {"tweet": random.choice(tweets), "fake_tweet": "false"}
+    return {"tweet": tweet, "fake_tweet": "false"}
