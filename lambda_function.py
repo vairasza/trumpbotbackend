@@ -263,7 +263,7 @@ def retrieve_topics(user_input):
             if (re.search(r'(merkel|german.*|deutsch.*|nazi.*)', word)):
                 array_of_topics.append("germany")
                 
-            if (re.search(r'(cannon.*|handgun.*|pistol.*|revolver.*|rifl.*|shotgun.*|firegun.*|weapon.*)', word)):
+            if (re.search(r'(gun.*|cannon.*|handgun.*|pistol.*|revolver.*|rifl.*|shotgun.*|firegun.*|weapon.*)', word)):
                 array_of_topics.append("guns")            
                 
             if (re.search(r'(fitness|strength|health.*|doctor.*|medic.*|hospital.*|obamacare)', word)):
@@ -338,8 +338,10 @@ def return_real_tweet(matched_group, topics):
     s3 = boto3.client('s3')
     s3_obj = s3.get_object(Bucket = 'trump-data', Key = key)
     
-    tweets = json.loads(s3_obj["Body"].read())
+    tweets = s3_obj["Body"].read().decode('utf-8').split("\n")
     
     tweet = random.choice(tweets)
 
     return {"tweet": tweet, "fake_tweet": "false"}
+    
+    
