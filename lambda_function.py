@@ -7,7 +7,6 @@ import random
 import markovify
 #import spacy
 
-#these groups are a reprensentation for our clusters
 models = [{"topic": "america", "count": 0, "file": "markov_america.txt"}, {"topic": "china", "count": 0, "file": "markov_china.txt"},
 {"topic": "clinton", "count": 0, "file": "markov_clinton.txt"}, {"topic": "cnn", "count": 0, "file": "markov_cnn.txt"}, {"topic": "covid", "count": 0, "file": "markov_covid.txt"},
 {"topic": "dems", "count": 0, "file": "markov_dems.txt"}, {"topic": "elections", "count": 0, "file": "markov_elections.txt"}, {"topic": "fakes", "count": 0, "file": "markov_fakes.txt"},
@@ -307,6 +306,10 @@ def retrieve_topics(user_input):
 
 
 def matching_group(topics):
+    
+    for model in models:
+        
+        model["count"] = 0
     
     for word in topics:
         
