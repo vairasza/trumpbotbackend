@@ -16,7 +16,7 @@ models = [{"topic": "america", "count": 0, "file": "markov_america.txt"}, {"topi
 {"topic": "kag", "count": 0, "file": "markov_kag.txt"},
 {"topic": "korea", "count": 0, "file": "markov_korea.txt"}, {"topic": "maga", "count": 0, "file": "markov_maga.txt"}, {"topic": "media", "count": 0, "file": "markov_media.txt"},
 {"topic": "military", "count": 0, "file": "markov_military.txt"}, {"topic": "myself", "count": 0, "file": "markov_myself.txt"}, {"topic": "nbc", "count": 0, "file": "markov_nbc.txt"},
-{"topic": "obamas", "count": 0, "file": "markov_obamas.txt"}, {"topic": "politics", "count": 0, "file": "markov_politics.txt"}, {"topic": "republican", "count": 0, "file": "markov_republican.txt"},
+{"topic": "obamas", "count": 0, "file": "markov_obamas.txt"}, {"topic": "politics", "count": 0, "file": "markov_politics.txt"}, {"topic": "republican", "count": 0, "file": "markov_republicans.txt"},
 {"topic": "russia", "count": 0, "file": "markov_russia.txt"}, {"topic": "walls", "count": 0, "file": "markov_walls.txt"}]
 
 ###
