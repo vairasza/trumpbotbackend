@@ -33,6 +33,7 @@ def handler(event, context):
         
         output["body"] = json.dumps({
                 "flavor_text": "I make a very gold conversation on these numerous topics: " + return_topics(),
+                "last_tweet": "",
                 "fake_tweet": "exit" 
             })
             
@@ -45,6 +46,7 @@ def handler(event, context):
 
             output["body"] = json.dumps({
                 "flavor_text": "This story is just another made up by Fake News tale that is told only to damage me. 100% Correct. Thank you.", #user correct - tweet generated
+                "last_tweet": "",
                 "fake_tweet": "exit" 
             })
 
@@ -54,6 +56,7 @@ def handler(event, context):
 
             output["body"] = json.dumps({
                     "flavor_text": "I am full of honesty and sincerity on the other hand you are a total liar. You got it wrong!", #user incorrect - tweet real
+                    "last_tweet": "",
                     "fake_tweet": "exit"  
                 })
 
@@ -65,6 +68,7 @@ def handler(event, context):
 
             output["body"] = json.dumps({
                 "flavor_text": "Haha, that was a fake tweet! Get this liar out of the White House.", #user incorrect - tweet generated
+                "last_tweet": "",
                 "fake_tweet": "exit" 
             })
 
@@ -74,6 +78,7 @@ def handler(event, context):
 
             output["body"] = json.dumps({
                     "flavor_text": "I dictated this tweet to my executive assistant and she posted it. True!", #user correct - tweet real
+                    "last_tweet": "",
                     "fake_tweet": "exit"  
                 })
 
@@ -86,6 +91,7 @@ def handler(event, context):
             
             output["body"] = json.dumps({
                     "flavor_text": "FILE THIS UNDER SH!T you can’t make up YET ITS NOT FAKE NEWS!!!!!! (no valid topic)",
+                    "last_tweet": "",
                     "fake_tweet": "exit"                    
             })
             
@@ -100,6 +106,7 @@ def handler(event, context):
  
             output["body"] = json.dumps({
                     "flavor_text": "Some very interesting topics -- here is my tweet:",
+                    "last_tweet": tweet["tweet"],
                     "fake_tweet": tweet["fake_tweet"]
             })
             
