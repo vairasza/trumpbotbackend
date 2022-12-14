@@ -1,6 +1,7 @@
 {
   "name": "trumpbotbackend",
   "version": "0.1.0",
+  "type": "module",
   "bin": {
     "trumpbotbackend": "bin/trumpbotbackend.js"
   },
