@@ -24,6 +24,6 @@ jobs:
             git fetch --all &&
             git reset --hard origin/master &&
             git pull origin main &&
-            docker build -t vairasza/trumpbot_backend .
-            docker run -p 5037:5037 -d vairasza/trumpbot_backend
+            chmod +x ./start_script.sh &&
+            bash ./start_script.sh
           '
