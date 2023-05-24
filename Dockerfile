@@ -1,6 +1,7 @@
-FROM python3.10.11
+FROM python
 WORKDIR /home/trumpbot_backend
 COPY ./requirements.txt ./requirements.txt
+COPY ./src .
 RUN python -m venv .venv
 RUN python -m pip install -r ./requirements.txt
 EXPOSE 5037
