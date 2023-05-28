@@ -2,7 +2,7 @@ name: Deploy Trumpbot Backend
 
 on:
   push:
-    branches: [main]
+    branches: []
 
 jobs:
   Deploy:

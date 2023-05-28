@@ -29,6 +29,7 @@ def hello_world():
 
     real_or_fake = [tweet.get_real_tweet, tweet.get_fake_tweet]
     rnd_func = random.choice(real_or_fake)
+    print(rnd_func)
     trump_tweet = rnd_func(group, topic_list)
 
     return {

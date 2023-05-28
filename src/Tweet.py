@@ -5,7 +5,7 @@ class Tweet:
 
   CURR_DIR = os.path.dirname(__file__)
   DATA_PATH = "data"
-  RETRIES = 2
+  RETRIES = 3
 
   def __init__(self) -> None:
     self.models: list[markovify.Text] = []
@@ -65,7 +65,6 @@ class Tweet:
   def get_real_tweet(self, group_index: int, topics: dict) -> dict:
     possible_tweets = []
     
-
     for tweet in self.tweets[group_index]:
         for topic in topics:
             
